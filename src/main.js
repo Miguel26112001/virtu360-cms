@@ -3,6 +3,7 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
 import router from "@/router/index.js";
 import App from './App.vue'
+import ToastService from 'primevue/toastservice';
 
 import 'primeflex/primeflex.css'
 import 'primeicons/primeicons.css'
@@ -15,8 +16,8 @@ import {
     Divider, Drawer,
     FileUpload, InputNumber,
     InputText,
-    ProgressBar, Select,
-    Tag,
+    ProgressBar, ProgressSpinner, Select, SelectButton,
+    Tag, Textarea, Toast,
     Tooltip
 } from "primevue"
 
@@ -28,6 +29,8 @@ app
         }
     })
     .use(router)
+    .use(ToastService)
+
     .component('Button', Button)
     .component('Divider', Divider)
     .component('Avatar', Avatar)
@@ -41,6 +44,10 @@ app
     .component('Drawer', Drawer)
     .component('Select', Select)
     .component('InputNumber', InputNumber)
+    .component('SelectButton', SelectButton)
+    .component('Textarea', Textarea)
+    .component('ProgressSpinner', ProgressSpinner)
+    .component('Toast', Toast)
 
     .directive('tooltip', Tooltip)
 

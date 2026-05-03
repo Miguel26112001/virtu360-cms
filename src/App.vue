@@ -25,6 +25,7 @@ export default {
 </script>
 
 <template>
+  <Toast/>
   <div class="flex min-h-screen surface-ground">
     <TheSideBar
         :is-collapsed="isCollapsed"

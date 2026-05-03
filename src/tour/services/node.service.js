@@ -40,4 +40,23 @@ export class NodeService {
         const response = await httpInstance.post(`/${BASE}/${fromNodeId}/links`, request);
         return response.data;
     }
+
+    /**
+     * Agrega un marcador a un nodo específico.
+     * @param {number|string} nodeId - ID del nodo (PathVariable).
+     * @param {AddMarkerRequest} markerRequest - Datos del marcador (RequestBody).
+     */
+    async addMarkerToNode(nodeId, markerRequest) {
+        try {
+            const response = await httpInstance.post(
+                `/${BASE}/${nodeId}/markers`,
+                markerRequest
+            );
+            return response.data;
+        } catch (error) {
+
+            console.error("Error en el servicio de markers:", error);
+            throw error;
+        }
+    }
 }
