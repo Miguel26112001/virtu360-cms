@@ -13,9 +13,9 @@ import {
     Card,
     Dialog,
     Divider, Drawer,
-    FileUpload,
+    FileUpload, InputNumber,
     InputText,
-    ProgressBar,
+    ProgressBar, Select,
     Tag,
     Tooltip
 } from "primevue"
@@ -39,6 +39,8 @@ app
     .component('FileUpload', FileUpload)
     .component('ProgressBar', ProgressBar)
     .component('Drawer', Drawer)
+    .component('Select', Select)
+    .component('InputNumber', InputNumber)
 
     .directive('tooltip', Tooltip)
 

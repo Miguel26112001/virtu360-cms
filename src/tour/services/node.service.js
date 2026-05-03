@@ -30,4 +30,14 @@ export class NodeService {
             }
         });
     }
+
+    /**
+     * Crea un enlace entre dos nodos.
+     * @param {number} fromNodeId - ID del nodo actual (Path Variable).
+     * @param {ConnectNodeRequest} request - Datos de la conexión (RequestBody).
+     */
+    async connectNodes(fromNodeId, request) {
+        const response = await httpInstance.post(`/${BASE}/${fromNodeId}/links`, request);
+        return response.data;
+    }
 }
