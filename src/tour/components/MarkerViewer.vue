@@ -82,15 +82,25 @@ export default {
 </script>
 
 <template>
-  <div class="relative w-full h-full border-round-xl overflow-hidden bg-black shadow-4">
+  <div class="relative w-full h-full bg-black overflow-hidden">
     <div ref="canvas" class="w-full h-full"></div>
-    <div v-if="!panorama" class="absolute inset-0 flex flex-column align-items-center justify-content-center text-white">
+
+    <!-- Overlay de Instrucciones para Mobile -->
+    <div v-if="panorama && currentTempPos === null"
+         class="absolute bottom-0 left-0 w-full p-3 pointer-events-none flex justify-content-center">
+      <div class="bg-black-alpha-60 text-white text-xs py-2 px-4 border-round-3xl flex align-items-center gap-2">
+        <i class="pi pi-info-circle"></i>
+        <span>Toca cualquier punto para colocar un marcador</span>
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div v-if="!panorama" class="absolute inset-0 flex flex-column align-items-center justify-content-center text-white p-4 text-center">
       <i class="pi pi-map text-6xl mb-3 opacity-20"></i>
-      <p>Selecciona una escena para gestionar marcadores</p>
+      <p>Selecciona una escena arriba para comenzar</p>
     </div>
   </div>
 </template>
-
 <style scoped>
 :deep(.marker-circle) {
   width: 20px;
