@@ -30,4 +30,33 @@ export class NodeService {
             }
         });
     }
+
+    /**
+     * Crea un enlace entre dos nodos.
+     * @param {number} fromNodeId - ID del nodo actual (Path Variable).
+     * @param {ConnectNodeRequest} request - Datos de la conexión (RequestBody).
+     */
+    async connectNodes(fromNodeId, request) {
+        const response = await httpInstance.post(`/${BASE}/${fromNodeId}/links`, request);
+        return response.data;
+    }
+
+    /**
+     * Agrega un marcador a un nodo específico.
+     * @param {number|string} nodeId - ID del nodo (PathVariable).
+     * @param {AddMarkerRequest} markerRequest - Datos del marcador (RequestBody).
+     */
+    async addMarkerToNode(nodeId, markerRequest) {
+        try {
+            const response = await httpInstance.post(
+                `/${BASE}/${nodeId}/markers`,
+                markerRequest
+            );
+            return response.data;
+        } catch (error) {
+
+            console.error("Error en el servicio de markers:", error);
+            throw error;
+        }
+    }
 }
