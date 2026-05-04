@@ -9,6 +9,7 @@ export default {
     return {
       isCollapsed: false,
       mobileMenuVisible: false,
+      isDark: false,
       menuItems: [
         { label: 'Crear Nodos', icon: 'pi pi-image', to: '/nodos' },
         { label: 'Conectar Nodos', icon: 'pi pi-external-link', to: '/links' },
@@ -19,41 +20,59 @@ export default {
   methods: {
     toggleSidebar() {
       this.isCollapsed = !this.isCollapsed;
+    },
+    toggleDarkMode() {
+      this.isDark = !this.isDark;
+      const element = document.querySelector('html');
+      element.classList.toggle('my-app-dark');
+      localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+    }
+  },
+  mounted() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDark = true;
+      document.querySelector('html').classList.add('my-app-dark');
     }
   }
 }
 </script>
 
 <template>
-  <Toast/>
-  <div class="flex min-h-screen surface-ground">
+  <Toast />
+  <!-- Eliminamos clases de fondo fijas y usamos la variable dinámica -->
+  <div class="layout-wrapper flex min-h-screen transition-colors duration-300">
     <TheSideBar
         :is-collapsed="isCollapsed"
         v-model:mobileVisible="mobileMenuVisible"
         :menu-items="menuItems"
         @toggle="toggleSidebar"
+        class="layout-sidebar"
     />
 
-    <main class="flex-grow-1 flex flex-column overflow-hidden">
-      <!-- Escuchamos el evento menu-click del header -->
-      <TheHeader @menu-click="mobileMenuVisible = true" />
+    <!-- El overflow-x-hidden es vital para evitar que el sidebar empuje el contenido fuera de pantalla -->
+    <div class="layout-content flex-grow-1 flex flex-column overflow-x-hidden">
+      <TheHeader
+          :is-dark="isDark"
+          @menu-click="mobileMenuVisible = true"
+          @toggle-dark="toggleDarkMode"
+      />
 
-      <div class="p-2 sm:p-4 flex-grow-1 overflow-auto">
-        <!-- Ajustamos el padding en mobile (p-2) vs escritorio (p-4) -->
-        <div class="bg-white border-round-xl shadow-2 p-3 sm:p-5 min-h-full">
-          <router-view />
+      <div class="p-3 md:p-4 lg:p-5 flex-grow-1 overflow-y-auto">
+        <div class="surface-card border-round-xl shadow-sm p-4 md:p-6 min-h-full border-1 border-surface-200 dark:border-surface-800 transition-all duration-200">
+          <router-view v-slot="{ Component }">
+            <transition name="page" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <style>
-a {
-  text-decoration: none;
-}
-
-:deep(.p-button:focus) {
-  box-shadow: none;
+.layout-sidebar {
+  z-index: 1100;
 }
 </style>
