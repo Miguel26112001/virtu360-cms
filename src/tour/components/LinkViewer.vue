@@ -1,6 +1,8 @@
 <script>
 import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 import '@photo-sphere-viewer/core/index.css';
+import '@photo-sphere-viewer/markers-plugin/index.css';
 
 export default {
   name: 'LinkViewer',
@@ -11,6 +13,7 @@ export default {
   emits: ['coords-captured'],
   data: () => ({
     viewer: null,
+    markersPlugin: null,
     loadingImage: false
   }),
   watch: {
@@ -31,20 +34,66 @@ export default {
           loadingImg: 'https://photo-sphere-viewer.js.org/assets/loader.gif',
           touchmoveTwoFingers: true,
           mousewheel: true,
+          plugins: [
+            [MarkersPlugin, {
+              // Configuración opcional del plugin
+            }]
+          ]
         });
+
+        this.markersPlugin = this.viewer.getPlugin(MarkersPlugin);
 
         this.viewer.addEventListener('ready', () => {
           this.loadingImage = false;
         });
 
         this.viewer.addEventListener('click', ({ data }) => {
+          this.updateTemporaryMarker(data.yaw, data.pitch);
           this.$emit('coords-captured', { yaw: data.yaw, pitch: data.pitch });
         });
       });
+    },
+    updateTemporaryMarker(yaw, pitch) {
+      if (!this.markersPlugin) return;
+      const markerId = 'temp-link-marker';
+
+      try {
+        this.markersPlugin.removeMarker(markerId);
+      } catch (e) {
+
+      }
+
+      this.markersPlugin.addMarker({
+        id: markerId,
+        position: { yaw, pitch },
+        html: `
+          <div class="custom-marker">
+            <i class="pi pi-map-marker text-red-500 text-3xl"></i>
+          </div>
+        `,
+        anchor: 'bottom center',
+        width: 32,
+        height: 32,
+        tooltip: 'New Link Position',
+        data: { generated: true }
+      });
+    },
+    clearTemporaryMarker() {
+      if (this.markersPlugin) {
+        try {
+          this.markersPlugin.removeMarker('temp-link-marker');
+        } catch (e) {
+
+        }
+      }
     }
   },
-  mounted() { this.initViewer(); },
-  beforeUnmount() { if (this.viewer) this.viewer.destroy(); }
+  mounted() {
+    this.initViewer();
+  },
+  beforeUnmount() {
+    if (this.viewer) this.viewer.destroy();
+  }
 }
 </script>
 
@@ -70,5 +119,20 @@ export default {
 </template>
 
 <style scoped>
+:deep(.custom-marker) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  animation: marker-bounce 0.3s ease-out;
+}
 
+@keyframes marker-bounce {
+  0% { transform: translateY(-20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.viewer-wrapper {
+  background: #000;
+}
 </style>

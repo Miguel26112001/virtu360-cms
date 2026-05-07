@@ -13,7 +13,8 @@ export default {
       nodes: [],
       selectedFromNode: null,
       linkForm: new ConnectNodeRequest(),
-      loading: false
+      loading: false,
+      projectId: this.$route.params.projectId
     };
   },
   computed: {
@@ -23,15 +24,17 @@ export default {
   },
   methods: {
     async fetchNodes() {
+      this.loading = true;
       try {
-        this.nodes = await this.nodeService.getAll();
+        this.nodes = await this.nodeService.getNodesByProjectId(this.projectId);
       } catch (e) {
         this.$toast.add({
           severity: 'error',
-          summary: 'Error de Carga',
-          detail: 'No se pudieron obtener los nodos del servidor.',
-          life: 5000
+          summary: 'Load Error',
+          detail: 'Could not fetch nodes.'
         });
+      } finally {
+        this.loading = false;
       }
     },
     handleCoords({ yaw, pitch }) {
@@ -39,22 +42,29 @@ export default {
       this.linkForm.pitch = pitch;
     },
     async onSave() {
-      if (!this.linkForm.yaw || !this.linkForm.toNodeId) return;
-      this.loading = true;
+      if (!this.linkForm.toNodeId || !this.selectedFromNode) return;
 
+      this.loading = true;
       try {
-        await this.nodeService.connectNodes(this.selectedFromNode.id, this.linkForm);
-        this.$toast.add({ severity: 'success', summary: 'Conectado', detail: 'El enlace se guardó correctamente', life: 3000 });
+        await this.nodeService.connectNodes(
+            this.projectId,
+            this.selectedFromNode.id,
+            this.linkForm
+        );
+        this.$toast.add({
+          severity: 'success',
+          summary: 'Connected',
+          detail: 'The link has been saved successfully'
+        });
 
         this.linkForm = new ConnectNodeRequest();
+        this.$refs.viewerRef.clearTemporaryMarker();
       } catch (e) {
-
-        const errorMessage = e.response?.data?.message || 'Error inesperado al conectar nodos';
+        console.error(e);
         this.$toast.add({
           severity: 'error',
-          summary: 'Fallo al Guardar',
-          detail: errorMessage,
-          life: 4000
+          summary: 'Save Failed',
+          detail: 'Check console for details'
         });
       } finally {
         this.loading = false;
@@ -85,7 +95,8 @@ export default {
       <!-- Panel Derecho (Visor) -->
       <div class="flex-grow-1" style="min-height: 500px; height: calc(100vh - 180px);">
         <LinkViewer
-            :panorama="selectedFromNode?.panorama"
+            ref="viewerRef"
+            :panorama="selectedFromNode?.panoramaUrl"
             :caption="selectedFromNode?.caption"
             @coords-captured="handleCoords"
         />

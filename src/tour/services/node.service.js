@@ -6,14 +6,14 @@ const NODES_PATH = import.meta.env.VITE_NODES_ENDPOINT_PATH;
 
 export class NodeService {
     /**
-     * Helper privado para construir la URL base: /projects/{projectId}/nodes
+     * Private helper to build the base URL: /projects/{projectId}/nodes
      */
     _getNodesUrl(projectId) {
         return `/${PROJECTS_PATH}/${projectId}/${NODES_PATH}`;
     }
 
     /**
-     * Obtiene todos los nodos de un proyecto.
+     * Get all nodes belonging to a project.
      */
     async getNodesByProjectId(projectId) {
         const response = await httpInstance.get(this._getNodesUrl(projectId));
@@ -21,7 +21,7 @@ export class NodeService {
     }
 
     /**
-     * Crea un nodo enviando un CreateNodeRequest (MultipartFormData).
+     * Create a new node using MultipartFormData (Panorama Image and Caption).
      */
     async createNode(projectId, createNodeRequest) {
         const formData = new FormData();
@@ -41,30 +41,50 @@ export class NodeService {
     }
 
     /**
-     * Elimina un nodo específico.
+     * Delete a specific node from a project.
      */
     async deleteNode(projectId, nodeId) {
         await httpInstance.delete(`${this._getNodesUrl(projectId)}/${nodeId}`);
     }
 
     /**
-     * Conecta nodos (Links).
+     * Connect two nodes by creating a link.
      */
-    async connectNodes(projectId, fromNodeId, connectNodeResource) {
+    async connectNodes(projectId, fromNodeId, connectNodeRequest) {
         const response = await httpInstance.post(
             `${this._getNodesUrl(projectId)}/${fromNodeId}/links`,
-            connectNodeResource
+            connectNodeRequest
         );
         return response.data;
     }
 
     /**
-     * Agrega un marcador a un nodo.
+     * Get all links for a specific node.
      */
-    async addMarker(projectId, nodeId, addMarkerResource) {
+    async getNodeLinks(projectId, nodeId) {
+        const response = await httpInstance.get(
+            `${this._getNodesUrl(projectId)}/${nodeId}/links`
+        );
+        return response.data;
+    }
+
+    /**
+     * Add a marker to a specific node.
+     */
+    async addMarker(projectId, nodeId, addMarkerRequest) {
         const response = await httpInstance.post(
             `${this._getNodesUrl(projectId)}/${nodeId}/markers`,
-            addMarkerResource
+            addMarkerRequest
+        );
+        return response.data;
+    }
+
+    /**
+     * Get all markers for a specific node.
+     */
+    async getNodeMarkers(projectId, nodeId) {
+        const response = await httpInstance.get(
+            `${this._getNodesUrl(projectId)}/${nodeId}/markers`
         );
         return response.data;
     }
