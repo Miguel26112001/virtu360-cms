@@ -3,6 +3,7 @@ import LinkControlPanel from "@/tour/components/LinkControlPanel.vue";
 import LinkViewer from "@/tour/components/LinkViewer.vue";
 import { NodeService } from "@/tour/services/node.service.js";
 import { ConnectNodeRequest } from "@/tour/model/connect-node.request.js";
+import {Link} from "@/tour/model/link.entity.js";
 
 export default {
   name: "LinksView",
@@ -11,6 +12,7 @@ export default {
     return {
       nodeService: new NodeService(),
       nodes: [],
+      existingLinks: [],
       selectedFromNode: null,
       linkForm: new ConnectNodeRequest(),
       loading: false,
@@ -35,6 +37,22 @@ export default {
         });
       } finally {
         this.loading = false;
+      }
+    },
+    async fetchExistingLinks(nodeId) {
+      if (!nodeId) return;
+      try {
+        const response = await this.nodeService.getNodeLinks(this.projectId, nodeId);
+        this.existingLinks = response.map(link => Link.fromResponse(link));
+      } catch (e) {
+        console.error("Error fetching links:", e);
+      }
+    },
+    async onFromNodeSelected(node) {
+      this.selectedFromNode = node;
+      this.existingLinks = [];
+      if (node) {
+        await this.fetchExistingLinks(node.id);
       }
     },
     handleCoords({ yaw, pitch }) {
@@ -80,24 +98,24 @@ export default {
 <template>
   <div class="links-page p-2 sm:p-4">
     <div class="flex flex-column lg:flex-row gap-4">
-      <!-- Panel Izquierdo (Control) -->
       <div class="w-full lg:w-22rem">
         <LinkControlPanel
             v-model="linkForm"
-            v-model:selectedFromNode="selectedFromNode"
+            :selectedFromNode="selectedFromNode"
             :nodes="nodes"
             :availableDestinations="availableDestinations"
             :loading="loading"
             @save="onSave"
+            @update:selectedFromNode="onFromNodeSelected"
         />
       </div>
 
-      <!-- Panel Derecho (Visor) -->
       <div class="flex-grow-1" style="min-height: 500px; height: calc(100vh - 180px);">
         <LinkViewer
             ref="viewerRef"
             :panorama="selectedFromNode?.panoramaUrl"
             :caption="selectedFromNode?.caption"
+            :existingLinks="existingLinks"
             @coords-captured="handleCoords"
         />
       </div>

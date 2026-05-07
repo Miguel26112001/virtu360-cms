@@ -8,7 +8,8 @@ export default {
   name: 'LinkViewer',
   props: {
     panorama: String,
-    caption: String
+    caption: String,
+    existingLinks: { type: Array, default: () => [] }
   },
   emits: ['coords-captured'],
   data: () => ({
@@ -17,9 +18,12 @@ export default {
     loadingImage: false
   }),
   watch: {
-    panorama() {
-      this.loadingImage = true;
-      this.initViewer();
+    panorama() { this.initViewer(); },
+    existingLinks: {
+      handler(links) {
+        this.renderExistingLinks(links);
+      },
+      deep: true
     }
   },
   methods: {
@@ -86,6 +90,29 @@ export default {
 
         }
       }
+    },
+    renderExistingLinks(links) {
+      if (!this.markersPlugin) return;
+
+      const allMarkers = this.markersPlugin.getMarkers();
+      allMarkers.forEach(m => {
+        if (m.id !== 'temp-link-marker') this.markersPlugin.removeMarker(m.id);
+      });
+
+      links.forEach(link => {
+        this.markersPlugin.addMarker({
+          id: `link-${link.id}`,
+          position: { yaw: link.yaw, pitch: link.pitch },
+          html: `
+            <div class="existing-link-marker">
+              <i class="pi pi-directions text-blue-500 text-3xl"></i>
+            </div>
+          `,
+          anchor: 'bottom center',
+          size: { width: 32, height: 32 },
+          tooltip: `Enlace existente a: ${link.toNodeId}`
+        });
+      });
     }
   },
   mounted() {
@@ -99,7 +126,6 @@ export default {
 
 <template>
   <div class="viewer-wrapper relative border-round-xl overflow-hidden bg-black shadow-4 h-full">
-    <!-- Capa de carga si el panorama está definido pero el visor aún no está listo -->
     <div v-if="loadingImage" class="absolute inset-0 flex flex-column align-items-center justify-content-center z-3 bg-black-alpha-50 text-white">
       <ProgressSpinner style="width: 50px; height: 50px" />
       <p class="mt-2">Cargando Escena...</p>
@@ -107,7 +133,6 @@ export default {
 
     <div ref="canvas" class="w-full h-full"></div>
 
-    <!-- Estado vacío -->
     <div v-if="!panorama" class="absolute inset-0 flex flex-column align-items-center justify-content-center text-white p-4">
       <div class="surface-card p-5 border-round-circle mb-4 bg-white-alpha-10">
         <i class="pi pi-map-marker text-6xl text-primary"></i>
@@ -134,5 +159,15 @@ export default {
 
 .viewer-wrapper {
   background: #000;
+}
+
+:deep(.existing-link-marker) {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+:deep(.existing-link-marker:hover) {
+  transform: scale(1.2);
 }
 </style>
