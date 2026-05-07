@@ -47,6 +47,7 @@ export default {
 
 <template>
   <Toast />
+  <ConfirmDialog></ConfirmDialog>
 
   <div class="layout-wrapper flex min-h-screen transition-colors duration-300">
 

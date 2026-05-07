@@ -47,7 +47,38 @@ export default {
       }
     },
     handleDelete(id) {
-      this.projects = this.projects.filter(p => p.id !== id);
+      this.$confirm.require({
+        message: 'Do you really want to delete this project? This action cannot be undone.',
+        header: 'Confirm Deletion',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancel',
+        acceptLabel: 'Delete',
+        rejectClass: 'p-button-secondary p-button-text',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          this.loading = true;
+          try {
+            await this.projectService.delete(id);
+            await this.fetchProjects();
+            this.$toast.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Project deleted successfully',
+              life: 3000
+            });
+          } catch (error) {
+            console.error("Error deleting project:", error);
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Could not delete project',
+              life: 3000
+            });
+          } finally {
+            this.loading = false;
+          }
+        }
+      });
     },
     handleOpenProject(id) {
       this.$router.push({ name: 'nodes', query: { projectId: id } });

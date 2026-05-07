@@ -26,4 +26,13 @@ export class ProjectService {
         const response = await httpInstance.post(`/${BASE}`, createProjectRequest);
         return response.data;
     }
+
+    /**
+     * Elimina un proyecto por su UUID.
+     * @param {string} projectId - El UUID del proyecto a eliminar.
+     * @returns {Promise<void>}
+     */
+    async delete(projectId) {
+        await httpInstance.delete(`/${BASE}/${projectId}`);
+    }
 }
