@@ -103,7 +103,38 @@ export default {
           life: 2000
         });
       }
-    }
+    },
+    async handleDeleteLink(linkId) {
+      this.$confirm.require({
+        message: 'Are you sure you want to delete this navigation link?',
+        header: 'Delete Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancel',
+        acceptLabel: 'Delete',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          try {
+            await this.nodeService.deleteLink(this.projectId, this.selectedFromNode.id, linkId);
+
+            this.$toast.add({
+              severity: 'success',
+              summary: 'Deleted',
+              detail: 'The link has been removed',
+              life: 3000
+            });
+
+            await this.fetchExistingLinks(this.selectedFromNode.id);
+          } catch (e) {
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Could not delete the link'
+            });
+          }
+        }
+      })
+    },
   },
   mounted() {
     this.fetchNodes();
@@ -134,6 +165,7 @@ export default {
             :existingLinks="existingLinks"
             @coords-captured="handleCoords"
             @node-navigate="handleNavigation"
+            @link-delete="handleDeleteLink"
         />
       </div>
     </div>

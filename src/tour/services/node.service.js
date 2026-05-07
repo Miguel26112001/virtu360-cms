@@ -69,6 +69,13 @@ export class NodeService {
     }
 
     /**
+     * Deletes a link from the node
+     */
+    async deleteLink(projectId, nodeId, linkId) {
+        await httpInstance.delete(`${this._getNodesUrl(projectId)}/${nodeId}/links/${linkId}`);
+    }
+
+    /**
      * Add a marker to a specific node.
      */
     async addMarker(projectId, nodeId, addMarkerRequest) {
