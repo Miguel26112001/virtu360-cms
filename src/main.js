@@ -12,7 +12,7 @@ import {
     Avatar, BadgeDirective,
     Breadcrumb,
     Button,
-    Card,
+    Card, Checkbox,
     Dialog,
     Divider, Drawer,
     FileUpload, InputNumber,
@@ -106,6 +106,7 @@ app
     .component('ProgressSpinner', ProgressSpinner)
     .component('Toast', Toast)
     .component('OverlayBadge', OverlayBadge)
+    .component('CheckBox', Checkbox)
 
     .directive('badge', BadgeDirective)
     .directive('tooltip', Tooltip)
