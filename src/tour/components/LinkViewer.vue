@@ -11,7 +11,7 @@ export default {
     caption: String,
     existingLinks: { type: Array, default: () => [] }
   },
-  emits: ['coords-captured'],
+  emits: ['coords-captured', 'node-navigate'],
   data: () => ({
     viewer: null,
     markersPlugin: null,
@@ -47,8 +47,15 @@ export default {
 
         this.markersPlugin = this.viewer.getPlugin(MarkersPlugin);
 
+        this.markersPlugin.addEventListener('select-marker', ({ marker }) => {
+          if (marker.id.startsWith('link-')) {
+            this.$emit('node-navigate', marker.data.toNodeId);
+          }
+        });
+
         this.viewer.addEventListener('ready', () => {
           this.loadingImage = false;
+          this.renderExistingLinks(this.existingLinks);
         });
 
         this.viewer.addEventListener('click', ({ data }) => {
@@ -92,27 +99,34 @@ export default {
       }
     },
     renderExistingLinks(links) {
-      if (!this.markersPlugin) return;
+      if (!this.markersPlugin || !this.viewer) return;
 
-      const allMarkers = this.markersPlugin.getMarkers();
-      allMarkers.forEach(m => {
-        if (m.id !== 'temp-link-marker') this.markersPlugin.removeMarker(m.id);
-      });
-
-      links.forEach(link => {
-        this.markersPlugin.addMarker({
-          id: `link-${link.id}`,
-          position: { yaw: link.yaw, pitch: link.pitch },
-          html: `
-            <div class="existing-link-marker">
-              <i class="pi pi-directions text-blue-500 text-3xl"></i>
-            </div>
-          `,
-          anchor: 'bottom center',
-          size: { width: 32, height: 32 },
-          tooltip: `Enlace existente a: ${link.toNodeId}`
+      try {
+        const allMarkers = this.markersPlugin.getMarkers();
+        allMarkers.forEach(m => {
+          if (m.id !== 'temp-link-marker') {
+            this.markersPlugin.removeMarker(m.id);
+          }
         });
-      });
+
+        links.forEach(link => {
+          this.markersPlugin.addMarker({
+            id: `link-${link.id}`,
+            position: { yaw: link.yaw, pitch: link.pitch },
+            html: `
+          <div class="existing-link-marker">
+            <i class="pi pi-directions text-blue-500 text-3xl"></i>
+          </div>
+        `,
+            anchor: 'bottom center',
+            size: { width: 32, height: 32 },
+            tooltip: `Ir a: ${link.toNodeId}`,
+            data: { toNodeId: link.toNodeId }
+          });
+        });
+      } catch (err) {
+        console.warn("Markers not ready yet", err);
+      }
     }
   },
   mounted() {

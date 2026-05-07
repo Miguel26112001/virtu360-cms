@@ -87,6 +87,22 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    handleNavigation(targetNodeId) {
+      const targetNode = this.nodes.find(n => n.id === targetNodeId);
+
+      if (targetNode) {
+        this.onFromNodeSelected(targetNode);
+
+        this.linkForm = new ConnectNodeRequest();
+
+        this.$toast.add({
+          severity: 'info',
+          summary: 'Navegando',
+          detail: `Cambiando a: ${targetNode.caption}`,
+          life: 2000
+        });
+      }
     }
   },
   mounted() {
@@ -117,6 +133,7 @@ export default {
             :caption="selectedFromNode?.caption"
             :existingLinks="existingLinks"
             @coords-captured="handleCoords"
+            @node-navigate="handleNavigation"
         />
       </div>
     </div>
