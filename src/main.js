@@ -106,7 +106,7 @@ app
     .component('ProgressSpinner', ProgressSpinner)
     .component('Toast', Toast)
     .component('OverlayBadge', OverlayBadge)
-    .component('CheckBox', Checkbox)
+    .component('Checkbox', Checkbox)
 
     .directive('badge', BadgeDirective)
     .directive('tooltip', Tooltip)
