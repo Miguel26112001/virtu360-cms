@@ -1,13 +1,13 @@
 import httpInstance from "@/shared/services/http.instance.js";
 import { ProjectSummaryResource } from "@/tour/model/project-summary.resource.js";
+import { CreateProjectRequest } from "@/tour/model/create-project.request.js";
 
 const BASE = import.meta.env.VITE_PROJECTS_ENDPOINT_PATH;
 
 export class ProjectService {
     /**
      * Obtiene los proyectos filtrados por el ID del propietario.
-     * Mapea la respuesta al ProjectSummaryResource.
-     * @param {string} ownerId - El identificador del dueño (por defecto 'demo-user').
+     * @param {string} ownerId
      * @returns {Promise<ProjectSummaryResource[]>}
      */
     async getByOwnerId(ownerId = 'demo-user') {
@@ -20,14 +20,10 @@ export class ProjectService {
 
     /**
      * Crea un nuevo proyecto.
-     * @param {Object} projectData - Datos del proyecto (title, description).
+     * @param {CreateProjectRequest} createProjectRequest - Datos del proyecto.
      */
-    async create(projectData) {
-        const payload = {
-            ...projectData,
-            ownerId: 'demo-user'
-        };
-        const response = await httpInstance.post(`/${BASE}`, payload);
+    async create(createProjectRequest) {
+        const response = await httpInstance.post(`/${BASE}`, createProjectRequest);
         return response.data;
     }
 }

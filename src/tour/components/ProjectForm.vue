@@ -20,20 +20,16 @@ export default {
     <div class="flex flex-column gap-3">
       <div class="flex flex-column gap-2">
         <label for="title" class="font-bold">Title</label>
-        <InputText id="title" v-bind:value="modelValue.title"
+        <InputText id="title" :value="modelValue.title"
                    @input="updateField('title', $event.target.value)" placeholder="e.g. My House Tour" />
       </div>
 
       <div class="flex flex-column gap-2">
         <label for="desc" class="font-bold">Description</label>
-        <Textarea id="desc" v-bind:value="modelValue.description"
+        <Textarea id="desc" :value="modelValue.description"
                   @input="updateField('description', $event.target.value)" rows="3" />
       </div>
 
-      <div class="flex align-items-center gap-2">
-        <Checkbox :modelValue="modelValue.published" @update:modelValue="updateField('published', $event)" :binary="true" inputId="published" />
-        <label for="published">Publish immediately?</label>
-      </div>
     </div>
 
     <template #footer>

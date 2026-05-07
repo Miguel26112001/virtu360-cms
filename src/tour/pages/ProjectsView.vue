@@ -1,5 +1,6 @@
 <script>
 import { ProjectService } from "@/tour/services/project.service.js";
+import { CreateProjectRequest } from "@/tour/model/create-project.request.js";
 import ProjectCard from "@/tour/components/ProjectCard.vue";
 import ProjectForm from "@/tour/components/ProjectForm.vue";
 
@@ -12,7 +13,7 @@ export default {
       projects: [],
       projectDialog: false,
       loading: false,
-      newProject: { title: '', description: '', published: false }
+      newProject: new CreateProjectRequest()
     };
   },
   methods: {
@@ -27,13 +28,23 @@ export default {
       }
     },
     openDialog() {
-      this.newProject = { title: '', description: '', published: false };
+      this.newProject = new CreateProjectRequest();
       this.projectDialog = true;
     },
-    handleSave() {
-      // Aquí iría la llamada al service.create()
-      console.log("Saving project:", this.newProject);
-      this.projectDialog = false;
+    async handleSave() {
+      if (!this.newProject.title) return;
+      this.loading = true;
+
+      try {
+        await this.projectService.create(this.newProject);
+
+        this.projectDialog = false;
+        await this.fetchProjects();
+      } catch (error) {
+        console.error("Error saving project:", error);
+      } finally {
+        this.loading = false;
+      }
     },
     handleDelete(id) {
       this.projects = this.projects.filter(p => p.id !== id);
