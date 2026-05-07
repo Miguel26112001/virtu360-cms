@@ -1,62 +1,71 @@
 import httpInstance from "@/shared/services/http.instance.js";
 import { Node } from "@/tour/model/node.entity.js";
 
-const BASE = import.meta.env.VITE_NODES_ENDPOINT_PATH;
+const PROJECTS_PATH = import.meta.env.VITE_PROJECTS_ENDPOINT_PATH;
+const NODES_PATH = import.meta.env.VITE_NODES_ENDPOINT_PATH;
 
 export class NodeService {
     /**
-     * Obtiene la lista de todos los nodos disponibles.
-     * Mapea los datos recibidos al modelo NodeResource definido en Java.
+     * Helper privado para construir la URL base: /projects/{projectId}/nodes
      */
-    async getAll() {
-        const response = await httpInstance.get(`/${BASE}`);
-        return response.data.map(item =>
-            new Node(item.id, item.panorama, item.thumbnail, item.caption)
-        );
+    _getNodesUrl(projectId) {
+        return `/${PROJECTS_PATH}/${projectId}/${NODES_PATH}`;
     }
 
     /**
-     * Crea un nuevo nodo enviando un CreateNodeResource (MultipartFile).
-     * Sobrescribe el header a multipart/form-data.
+     * Obtiene todos los nodos de un proyecto.
      */
-    create(resource) {
+    async getNodesByProjectId(projectId) {
+        const response = await httpInstance.get(this._getNodesUrl(projectId));
+        return response.data.map(item => Node.fromResponse(item));
+    }
+
+    /**
+     * Crea un nodo enviando un CreateNodeRequest (MultipartFormData).
+     */
+    async createNode(projectId, createNodeRequest) {
         const formData = new FormData();
-        formData.append('caption', resource.caption);
-        formData.append('file', resource.file);
+        formData.append('caption', createNodeRequest.caption);
+        formData.append('file', createNodeRequest.file);
 
-        return httpInstance.post(`/${BASE}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
+        const response = await httpInstance.post(
+            this._getNodesUrl(projectId),
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             }
-        });
+        );
+        return Node.fromResponse(response.data);
     }
 
     /**
-     * Crea un enlace entre dos nodos.
-     * @param {number} fromNodeId - ID del nodo actual (Path Variable).
-     * @param {ConnectNodeRequest} request - Datos de la conexión (RequestBody).
+     * Elimina un nodo específico.
      */
-    async connectNodes(fromNodeId, request) {
-        const response = await httpInstance.post(`/${BASE}/${fromNodeId}/links`, request);
+    async deleteNode(projectId, nodeId) {
+        await httpInstance.delete(`${this._getNodesUrl(projectId)}/${nodeId}`);
+    }
+
+    /**
+     * Conecta nodos (Links).
+     */
+    async connectNodes(projectId, fromNodeId, connectNodeResource) {
+        const response = await httpInstance.post(
+            `${this._getNodesUrl(projectId)}/${fromNodeId}/links`,
+            connectNodeResource
+        );
         return response.data;
     }
 
     /**
-     * Agrega un marcador a un nodo específico.
-     * @param {number|string} nodeId - ID del nodo (PathVariable).
-     * @param {AddMarkerRequest} markerRequest - Datos del marcador (RequestBody).
+     * Agrega un marcador a un nodo.
      */
-    async addMarkerToNode(nodeId, markerRequest) {
-        try {
-            const response = await httpInstance.post(
-                `/${BASE}/${nodeId}/markers`,
-                markerRequest
-            );
-            return response.data;
-        } catch (error) {
-
-            console.error("Error en el servicio de markers:", error);
-            throw error;
-        }
+    async addMarker(projectId, nodeId, addMarkerResource) {
+        const response = await httpInstance.post(
+            `${this._getNodesUrl(projectId)}/${nodeId}/markers`,
+            addMarkerResource
+        );
+        return response.data;
     }
 }

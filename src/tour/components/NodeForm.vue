@@ -64,7 +64,14 @@ export default {
     <!-- En móvil, botones alineados al ancho total -->
     <div class="flex flex-column-reverse sm:flex-row gap-2 w-full sm:w-auto">
       <Button label="Cancelar" icon="pi pi-times" text @click="$emit('close')" :disabled="loading" class="w-full sm:w-auto" />
-      <Button label="Crear Nodo" icon="pi pi-check" @click="$emit('save')" :loading="loading" class="w-full sm:w-auto px-4" />
+      <Button
+          label="Crear Nodo"
+          icon="pi pi-check"
+          @click="$emit('save')"
+          :loading="loading"
+          :disabled="!modelValue.caption || !modelValue.file || loading"
+          class="w-full sm:w-auto px-4"
+      />
     </div>
   </template>
   </Dialog>
