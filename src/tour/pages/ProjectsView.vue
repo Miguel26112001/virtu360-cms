@@ -80,8 +80,12 @@ export default {
         }
       });
     },
-    handleOpenProject(id) {
-      this.$router.push({ name: 'nodes', query: { projectId: id } });
+    handleOpenProject(project) {
+      this.$router.push({
+        name: 'nodes',
+        params: { projectId: project.id },
+        query: { projectName: project.title }
+      });
     }
   },
   mounted() {

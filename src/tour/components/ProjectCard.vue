@@ -24,7 +24,12 @@ export default {
 
     <div class="flex gap-2 mt-auto">
       <Button icon="pi pi-trash" class="p-button-danger p-button-text" @click="$emit('delete', project.id)" />
-      <Button label="View Nodes" icon="pi pi-arrow-right" class="p-button-outlined ml-auto" @click="$emit('open', project.id)" />
+      <Button
+          label="View Nodes"
+          icon="pi pi-arrow-right"
+          class="p-button-outlined ml-auto"
+          @click="$emit('open', project)"
+      />
     </div>
   </div>
 </template>

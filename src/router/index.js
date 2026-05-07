@@ -5,25 +5,27 @@ import LinksView from "@/tour/pages/LinksView.vue";
 import MarkersView from "@/tour/pages/MarkersView.vue";
 
 const routes = [
-    { path: '/', redirect: '/projects' },
-
+    {
+        path: '/',
+        redirect: '/projects'
+    },
     {
         path: '/projects',
         name: 'projects',
         component: ProjectsView
     },
     {
-        path: '/nodes',
+        path: '/projects/:projectId/nodes',
         name: 'nodes',
         component: NodesView
     },
     {
-        path: '/links',
+        path: '/projects/:projectId/links',
         name: 'links',
         component: LinksView
     },
     {
-        path: '/markers',
+        path: '/projects/:projectId/markers',
         name: 'markers',
         component: MarkersView
     },

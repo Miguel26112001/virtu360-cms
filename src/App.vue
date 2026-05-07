@@ -14,13 +14,30 @@ export default {
   },
   computed: {
     isProjectSelection() {
-      return this.$route.name === 'projects';
+      return !this.$route.params.projectId;
     },
     menuItems() {
+      const projectId = this.$route.params.projectId;
+      const projectName = this.$route.query.projectName;
+
+      if (!projectId) return [];
+
       return [
-        { label: 'Project Nodes', icon: 'pi pi-image', to: '/nodes' },
-        { label: 'Connect Nodes', icon: 'pi pi-external-link', to: '/links' },
-        { label: 'Manage Markers', icon: 'pi pi-map-marker', to: '/markers' }
+        {
+          label: 'Project Nodes',
+          icon: 'pi pi-image',
+          to: { name: 'nodes', params: { projectId }, query: { projectName } }
+        },
+        {
+          label: 'Connect Nodes',
+          icon: 'pi pi-external-link',
+          to: { name: 'links', params: { projectId }, query: { projectName } }
+        },
+        {
+          label: 'Manage Markers',
+          icon: 'pi pi-map-marker',
+          to: { name: 'markers', params: { projectId }, query: { projectName } }
+        }
       ];
     }
   },
