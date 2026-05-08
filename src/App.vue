@@ -37,6 +37,11 @@ export default {
           label: 'Manage Markers',
           icon: 'pi pi-map-marker',
           to: { name: 'markers', params: { projectId }, query: { projectName } }
+        },
+        {
+          label: 'Settings',
+          icon: 'pi pi-cog',
+          to: { name: 'settings', params: { projectId }, query: { projectName } }
         }
       ];
     }

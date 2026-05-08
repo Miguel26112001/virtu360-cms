@@ -1,6 +1,7 @@
 import httpInstance from "@/shared/services/http.instance.js";
 import { ProjectSummaryResource } from "@/tour/model/project-summary.resource.js";
 import { CreateProjectRequest } from "@/tour/model/create-project.request.js";
+import {ProjectDetails} from "@/tour/model/project-details.entity.js";
 
 const BASE = import.meta.env.VITE_PROJECTS_ENDPOINT_PATH;
 
@@ -19,6 +20,16 @@ export class ProjectService {
     }
 
     /**
+     * Obtiene el detalle completo de un proyecto incluyendo sus nodos.
+     * @param {string} projectId - UUID del proyecto
+     * @returns {Promise<ProjectDetails>}
+     */
+    async getById(projectId) {
+        const response = await httpInstance.get(`/${BASE}/${projectId}`);
+        return ProjectDetails.fromResponse(response.data);
+    }
+
+    /**
      * Crea un nuevo proyecto.
      * @param {CreateProjectRequest} createProjectRequest - Datos del proyecto.
      */
@@ -34,5 +45,33 @@ export class ProjectService {
      */
     async delete(projectId) {
         await httpInstance.delete(`/${BASE}/${projectId}`);
+    }
+
+    /**
+     * Actualiza los datos básicos del proyecto.
+     * @param {string} projectId
+     * @param {UpdateProjectRequest} updateProjectRequest
+     */
+    async update(projectId, updateProjectRequest) {
+        const response = await httpInstance.put(`/${BASE}/${projectId}`, updateProjectRequest);
+        return response.data;
+    }
+
+    /**
+     * Publica el proyecto para que sea visible globalmente.
+     * @param {string} projectId
+     */
+    async publish(projectId) {
+        const response = await httpInstance.post(`/${BASE}/${projectId}/publish`);
+        return response.data;
+    }
+
+    /**
+     * Despublica el proyecto (vuelve a modo borrador).
+     * @param {string} projectId
+     */
+    async unpublish(projectId) {
+        const response = await httpInstance.post(`/${BASE}/${projectId}/unpublish`);
+        return response.data;
     }
 }
