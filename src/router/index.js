@@ -3,6 +3,7 @@ import ProjectsView from "@/tour/pages/ProjectsView.vue";
 import NodesView from "@/tour/pages/NodesView.vue";
 import LinksView from "@/tour/pages/LinksView.vue";
 import MarkersView from "@/tour/pages/MarkersView.vue";
+import SettingsView from "@/tour/pages/SettingsView.vue";
 
 const routes = [
     {
@@ -28,6 +29,11 @@ const routes = [
         path: '/projects/:projectId/markers',
         name: 'markers',
         component: MarkersView
+    },
+    {
+        path: '/projects/:projectId/settings',
+        name: 'settings',
+        component: SettingsView
     },
 ];
 
