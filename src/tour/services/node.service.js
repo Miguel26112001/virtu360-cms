@@ -74,25 +74,4 @@ export class NodeService {
     async deleteLink(projectId, nodeId, linkId) {
         await httpInstance.delete(`${this._getNodesUrl(projectId)}/${nodeId}/links/${linkId}`);
     }
-
-    /**
-     * Add a marker to a specific node.
-     */
-    async addMarker(projectId, nodeId, addMarkerRequest) {
-        const response = await httpInstance.post(
-            `${this._getNodesUrl(projectId)}/${nodeId}/markers`,
-            addMarkerRequest
-        );
-        return response.data;
-    }
-
-    /**
-     * Get all markers for a specific node.
-     */
-    async getNodeMarkers(projectId, nodeId) {
-        const response = await httpInstance.get(
-            `${this._getNodesUrl(projectId)}/${nodeId}/markers`
-        );
-        return response.data;
-    }
 }
