@@ -8,7 +8,8 @@ export default {
   name: 'MarkerViewer',
   props: {
     panorama: String,
-    markers: { type: Array, default: () => [] }
+    markers: { type: Array, default: () => [] },
+    editingMarkerId: { type: [String, Number], default: null }
   },
   emits: ['position-selected', 'marker-delete', 'marker-edit'],
   data: () => ({
@@ -73,10 +74,11 @@ export default {
 
     renderMarkersState() {
       if (!this.markersPlugin) return;
-
       this.markersPlugin.clearMarkers();
 
       this.markers.forEach(m => {
+        const isEditing = m.id === this.editingMarkerId;
+
         const typeConfigs = {
           'INFO': { icon: 'pi-info-circle', color: '#3b82f6', label: 'Información' },
           'VIDEO': { icon: 'pi-video', color: '#ef4444', label: 'Video' },
@@ -89,12 +91,13 @@ export default {
           id: m.id,
           position: m.position,
           html: `
-            <div class="custom-poi" style="background: ${config.color}; border-color: ${config.color}">
-              <i class="pi ${config.icon}"></i>
+            <div class="custom-poi ${isEditing ? 'is-editing' : ''}"
+                 style="background: ${config.color}; border-color: ${isEditing ? '#fff' : config.color}">
+              <i class="pi ${isEditing ? 'pi-pencil' : config.icon}"></i>
             </div>
           `,
           anchor: 'bottom center',
-          tooltip: {
+          tooltip: isEditing ? null : {
             content: `
               <div class="m-tooltip-content p-3 flex flex-column gap-2" style="min-width: 180px;">
                 <div class="flex align-items-center gap-2 mb-1">
@@ -124,7 +127,7 @@ export default {
         });
       });
 
-      if (this.currentTempPos) {
+      if (this.currentTempPos && !this.editingMarkerId) {
         this.markersPlugin.addMarker({
           id: 'temp-new',
           position: this.currentTempPos,
@@ -185,10 +188,6 @@ export default {
   font-size: 13px;
 }
 
-:deep(.psv-tooltip) {
-  pointer-events: auto !important;
-}
-
 :deep(.m-tooltip-content) {
   background: white;
   border-radius: 12px;
@@ -234,5 +233,17 @@ export default {
 @keyframes pulse {
   0% { box-shadow: 0 0 0 0 rgba(255, 62, 62, 0.5); }
   100% { box-shadow: 0 0 0 12px rgba(255, 62, 62, 0); }
+}
+
+:deep(.custom-poi.is-editing) {
+  border: 3px solid white !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  animation: bounce 1s infinite;
+  z-index: 100;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: rotate(-45deg) scale(1.2); }
+  50% { transform: rotate(-45deg) scale(1.4); }
 }
 </style>

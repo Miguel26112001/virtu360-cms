@@ -9,6 +9,11 @@ import {
   AddVideoMarkerRequest,
   AddMarkerRequest
 } from "@/tour/model/add-marker.request.js";
+import {
+  UpdateInfoMarkerRequest,
+  UpdateGalleryMarkerRequest,
+  UpdateVideoMarkerRequest
+} from "@/tour/model/update-marker.request.js";
 
 export default {
   name: "MarkersView",
@@ -51,28 +56,47 @@ export default {
     async saveMarker() {
       this.loading = true;
       try {
-        let saved;
         const nodeId = this.selectedNode.id;
+        const isUpdate = !!this.newMarker.id;
+        let result;
 
-        if (this.newMarker.type === 'INFO')
-          saved = await this.markerService.addInfoMarker(this.projectId, nodeId, this.newMarker);
-        else if (this.newMarker.type === 'VIDEO')
-          saved = await this.markerService.addVideoMarker(this.projectId, nodeId, this.newMarker);
-        else
-          saved = await this.markerService.addGalleryMarker(this.projectId, nodeId, this.newMarker);
+        if (isUpdate) {
+          let updateReq;
+          if (this.newMarker.type === 'INFO') {
+            updateReq = new UpdateInfoMarkerRequest(this.newMarker);
+            result = await this.markerService.updateInfoMarker(this.projectId, nodeId, this.newMarker.id, updateReq);
+          } else if (this.newMarker.type === 'VIDEO') {
+            updateReq = new UpdateVideoMarkerRequest(this.newMarker);
+            result = await this.markerService.updateVideoMarker(this.projectId, nodeId, this.newMarker.id, updateReq);
+          } else {
+            updateReq = new UpdateGalleryMarkerRequest(this.newMarker);
+            result = await this.markerService.updateGalleryMarker(this.projectId, nodeId, this.newMarker.id, updateReq);
+          }
 
-        this.existingMarkers.push(saved);
+          const index = this.existingMarkers.findIndex(m => m.id === result.id);
+          if (index !== -1) this.existingMarkers[index] = result;
+        } else {
+          if (this.newMarker.type === 'INFO')
+            result = await this.markerService.addInfoMarker(this.projectId, nodeId, this.newMarker);
+          else if (this.newMarker.type === 'VIDEO')
+            result = await this.markerService.addVideoMarker(this.projectId, nodeId, this.newMarker);
+          else
+            result = await this.markerService.addGalleryMarker(this.projectId, nodeId, this.newMarker);
+
+          this.existingMarkers.push(result);
+        }
+
         this.$toast.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: 'Marcador guardado'
+          detail: isUpdate ? 'Marcador actualizado' : 'Marcador guardado'
         });
         this.resetForm();
       } catch (e) {
         this.$toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudo guardar'
+          detail: 'Operación fallida'
         });
       } finally {
         this.loading = false;
@@ -161,13 +185,13 @@ export default {
             ref="viewerRef"
             :panorama="selectedNode?.panoramaUrl"
             :markers="existingMarkers"
+            :editing-marker-id="newMarker.id"
             @position-selected="handlePosition"
             @marker-delete="confirmDeleteMarker"
             @marker-edit="initMarkerEditing"
         />
       </div>
 
-      <!-- Formulario (En Mobile se siente como una tarjeta de acción inferior) -->
       <div class="col-12 lg:col-4 p-2 md:p-3 bg-faint border-top-1 lg:border-top-none lg:border-left-1 border-200 overflow-y-auto form-container">
 
         <div v-if="newMarker.position.yaw === 0 && !selectedNode" class="hidden lg:flex flex-column align-items-center justify-content-center h-full text-400">

@@ -59,4 +59,37 @@ export class MarkerService {
     async deleteMarker(projectId, nodeId, markerId) {
         await httpInstance.delete(`${this._getMarkersBaseUrl(projectId, nodeId)}/markers/${markerId}`);
     }
+
+    /**
+     * Actualizar un Info Marker
+     */
+    async updateInfoMarker(projectId, nodeId, markerId, updateRequest) {
+        const response = await httpInstance.put(
+            `${this._getMarkersBaseUrl(projectId, nodeId)}/info-markers/${markerId}`,
+            updateRequest
+        );
+        return Marker.fromResponse(response.data);
+    }
+
+    /**
+     * Actualizar un Video Marker
+     */
+    async updateVideoMarker(projectId, nodeId, markerId, updateRequest) {
+        const response = await httpInstance.put(
+            `${this._getMarkersBaseUrl(projectId, nodeId)}/video-markers/${markerId}`,
+            updateRequest
+        );
+        return Marker.fromResponse(response.data);
+    }
+
+    /**
+     * Actualizar un Gallery Marker
+     */
+    async updateGalleryMarker(projectId, nodeId, markerId, updateRequest) {
+        const response = await httpInstance.put(
+            `${this._getMarkersBaseUrl(projectId, nodeId)}/gallery-markers/${markerId}`,
+            updateRequest
+        );
+        return Marker.fromResponse(response.data);
+    }
 }
