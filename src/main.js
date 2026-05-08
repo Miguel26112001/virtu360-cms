@@ -12,7 +12,7 @@ import {
     Avatar, BadgeDirective,
     Breadcrumb,
     Button,
-    Card,
+    Card, Checkbox, ConfirmationService, ConfirmDialog,
     Dialog,
     Divider, Drawer,
     FileUpload, InputNumber,
@@ -87,6 +87,7 @@ app
     })
     .use(router)
     .use(ToastService)
+    .use(ConfirmationService)
 
     .component('Button', Button)
     .component('Divider', Divider)
@@ -106,6 +107,8 @@ app
     .component('ProgressSpinner', ProgressSpinner)
     .component('Toast', Toast)
     .component('OverlayBadge', OverlayBadge)
+    .component('Checkbox', Checkbox)
+    .component('ConfirmDialog', ConfirmDialog)
 
     .directive('badge', BadgeDirective)
     .directive('tooltip', Tooltip)

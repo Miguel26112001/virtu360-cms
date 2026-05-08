@@ -10,12 +10,36 @@ export default {
       isCollapsed: false,
       mobileMenuVisible: false,
       isDark: false,
-      menuItems: [
-        { label: 'Crear Nodos', icon: 'pi pi-image', to: '/nodos' },
-        { label: 'Conectar Nodos', icon: 'pi pi-external-link', to: '/links' },
-        { label: 'Añadir Markers', icon: 'pi pi-map-marker', to: '/markers' }
-      ]
     };
+  },
+  computed: {
+    isProjectSelection() {
+      return !this.$route.params.projectId;
+    },
+    menuItems() {
+      const projectId = this.$route.params.projectId;
+      const projectName = this.$route.query.projectName;
+
+      if (!projectId) return [];
+
+      return [
+        {
+          label: 'Project Nodes',
+          icon: 'pi pi-image',
+          to: { name: 'nodes', params: { projectId }, query: { projectName } }
+        },
+        {
+          label: 'Connect Nodes',
+          icon: 'pi pi-external-link',
+          to: { name: 'links', params: { projectId }, query: { projectName } }
+        },
+        {
+          label: 'Manage Markers',
+          icon: 'pi pi-map-marker',
+          to: { name: 'markers', params: { projectId }, query: { projectName } }
+        }
+      ];
+    }
   },
   methods: {
     toggleSidebar() {
@@ -40,9 +64,12 @@ export default {
 
 <template>
   <Toast />
-  <!-- Eliminamos clases de fondo fijas y usamos la variable dinámica -->
+  <ConfirmDialog></ConfirmDialog>
+
   <div class="layout-wrapper flex min-h-screen transition-colors duration-300">
+
     <TheSideBar
+        v-if="!isProjectSelection"
         :is-collapsed="isCollapsed"
         v-model:mobileVisible="mobileMenuVisible"
         :menu-items="menuItems"
@@ -50,16 +77,20 @@ export default {
         class="layout-sidebar"
     />
 
-    <!-- El overflow-x-hidden es vital para evitar que el sidebar empuje el contenido fuera de pantalla -->
     <div class="layout-content flex-grow-1 flex flex-column overflow-x-hidden">
+
       <TheHeader
           :is-dark="isDark"
+          :show-menu-button="!isProjectSelection"
           @menu-click="mobileMenuVisible = true"
           @toggle-dark="toggleDarkMode"
       />
 
       <div class="p-3 md:p-4 lg:p-5 flex-grow-1 overflow-y-auto">
-        <div class="surface-card border-round-xl shadow-sm p-4 md:p-6 min-h-full border-1 border-surface-200 dark:border-surface-800 transition-all duration-200">
+        <div :class="[
+          'surface-card border-round-xl shadow-sm p-4 md:p-6 min-h-full border-1 border-surface-200 dark:border-surface-800 transition-all duration-200',
+          isProjectSelection ? 'max-w-7xl mx-auto w-full' : ''
+        ]">
           <router-view v-slot="{ Component }">
             <transition name="page" mode="out-in">
               <component :is="Component" />

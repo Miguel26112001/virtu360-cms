@@ -3,6 +3,7 @@ import LinkControlPanel from "@/tour/components/LinkControlPanel.vue";
 import LinkViewer from "@/tour/components/LinkViewer.vue";
 import { NodeService } from "@/tour/services/node.service.js";
 import { ConnectNodeRequest } from "@/tour/model/connect-node.request.js";
+import {Link} from "@/tour/model/link.entity.js";
 
 export default {
   name: "LinksView",
@@ -11,9 +12,11 @@ export default {
     return {
       nodeService: new NodeService(),
       nodes: [],
+      existingLinks: [],
       selectedFromNode: null,
       linkForm: new ConnectNodeRequest(),
-      loading: false
+      loading: false,
+      projectId: this.$route.params.projectId
     };
   },
   computed: {
@@ -23,15 +26,33 @@ export default {
   },
   methods: {
     async fetchNodes() {
+      this.loading = true;
       try {
-        this.nodes = await this.nodeService.getAll();
+        this.nodes = await this.nodeService.getNodesByProjectId(this.projectId);
       } catch (e) {
         this.$toast.add({
           severity: 'error',
-          summary: 'Error de Carga',
-          detail: 'No se pudieron obtener los nodos del servidor.',
-          life: 5000
+          summary: 'Load Error',
+          detail: 'Could not fetch nodes.'
         });
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchExistingLinks(nodeId) {
+      if (!nodeId) return;
+      try {
+        const response = await this.nodeService.getNodeLinks(this.projectId, nodeId);
+        this.existingLinks = response.map(link => Link.fromResponse(link));
+      } catch (e) {
+        console.error("Error fetching links:", e);
+      }
+    },
+    async onFromNodeSelected(node) {
+      this.selectedFromNode = node;
+      this.existingLinks = [];
+      if (node) {
+        await this.fetchExistingLinks(node.id);
       }
     },
     handleCoords({ yaw, pitch }) {
@@ -39,27 +60,81 @@ export default {
       this.linkForm.pitch = pitch;
     },
     async onSave() {
-      if (!this.linkForm.yaw || !this.linkForm.toNodeId) return;
-      this.loading = true;
+      if (!this.linkForm.toNodeId || !this.selectedFromNode) return;
 
+      this.loading = true;
       try {
-        await this.nodeService.connectNodes(this.selectedFromNode.id, this.linkForm);
-        this.$toast.add({ severity: 'success', summary: 'Conectado', detail: 'El enlace se guardó correctamente', life: 3000 });
+        await this.nodeService.connectNodes(
+            this.projectId,
+            this.selectedFromNode.id,
+            this.linkForm
+        );
+        this.$toast.add({
+          severity: 'success',
+          summary: 'Connected',
+          detail: 'The link has been saved successfully'
+        });
 
         this.linkForm = new ConnectNodeRequest();
+        this.$refs.viewerRef.clearTemporaryMarker();
       } catch (e) {
-
-        const errorMessage = e.response?.data?.message || 'Error inesperado al conectar nodos';
+        console.error(e);
         this.$toast.add({
           severity: 'error',
-          summary: 'Fallo al Guardar',
-          detail: errorMessage,
-          life: 4000
+          summary: 'Save Failed',
+          detail: 'Check console for details'
         });
       } finally {
         this.loading = false;
       }
-    }
+    },
+    handleNavigation(targetNodeId) {
+      const targetNode = this.nodes.find(n => n.id === targetNodeId);
+
+      if (targetNode) {
+        this.onFromNodeSelected(targetNode);
+
+        this.linkForm = new ConnectNodeRequest();
+
+        this.$toast.add({
+          severity: 'info',
+          summary: 'Navegando',
+          detail: `Cambiando a: ${targetNode.caption}`,
+          life: 2000
+        });
+      }
+    },
+    async handleDeleteLink(linkId) {
+      this.$confirm.require({
+        message: 'Are you sure you want to delete this navigation link?',
+        header: 'Delete Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancel',
+        acceptLabel: 'Delete',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          try {
+            await this.nodeService.deleteLink(this.projectId, this.selectedFromNode.id, linkId);
+
+            this.$toast.add({
+              severity: 'success',
+              summary: 'Deleted',
+              detail: 'The link has been removed',
+              life: 3000
+            });
+
+            await this.fetchExistingLinks(this.selectedFromNode.id);
+          } catch (e) {
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Could not delete the link'
+            });
+          }
+        }
+      })
+    },
   },
   mounted() {
     this.fetchNodes();
@@ -70,24 +145,27 @@ export default {
 <template>
   <div class="links-page p-2 sm:p-4">
     <div class="flex flex-column lg:flex-row gap-4">
-      <!-- Panel Izquierdo (Control) -->
       <div class="w-full lg:w-22rem">
         <LinkControlPanel
             v-model="linkForm"
-            v-model:selectedFromNode="selectedFromNode"
+            :selectedFromNode="selectedFromNode"
             :nodes="nodes"
             :availableDestinations="availableDestinations"
             :loading="loading"
             @save="onSave"
+            @update:selectedFromNode="onFromNodeSelected"
         />
       </div>
 
-      <!-- Panel Derecho (Visor) -->
       <div class="flex-grow-1" style="min-height: 500px; height: calc(100vh - 180px);">
         <LinkViewer
-            :panorama="selectedFromNode?.panorama"
+            ref="viewerRef"
+            :panorama="selectedFromNode?.panoramaUrl"
             :caption="selectedFromNode?.caption"
+            :existingLinks="existingLinks"
             @coords-captured="handleCoords"
+            @node-navigate="handleNavigation"
+            @link-delete="handleDeleteLink"
         />
       </div>
     </div>

@@ -1,62 +1,77 @@
 import httpInstance from "@/shared/services/http.instance.js";
 import { Node } from "@/tour/model/node.entity.js";
 
-const BASE = import.meta.env.VITE_NODES_ENDPOINT_PATH;
+const PROJECTS_PATH = import.meta.env.VITE_PROJECTS_ENDPOINT_PATH;
+const NODES_PATH = import.meta.env.VITE_NODES_ENDPOINT_PATH;
 
 export class NodeService {
     /**
-     * Obtiene la lista de todos los nodos disponibles.
-     * Mapea los datos recibidos al modelo NodeResource definido en Java.
+     * Private helper to build the base URL: /projects/{projectId}/nodes
      */
-    async getAll() {
-        const response = await httpInstance.get(`/${BASE}`);
-        return response.data.map(item =>
-            new Node(item.id, item.panorama, item.thumbnail, item.caption)
-        );
+    _getNodesUrl(projectId) {
+        return `/${PROJECTS_PATH}/${projectId}/${NODES_PATH}`;
     }
 
     /**
-     * Crea un nuevo nodo enviando un CreateNodeResource (MultipartFile).
-     * Sobrescribe el header a multipart/form-data.
+     * Get all nodes belonging to a project.
      */
-    create(resource) {
+    async getNodesByProjectId(projectId) {
+        const response = await httpInstance.get(this._getNodesUrl(projectId));
+        return response.data.map(item => Node.fromResponse(item));
+    }
+
+    /**
+     * Create a new node using MultipartFormData (Panorama Image and Caption).
+     */
+    async createNode(projectId, createNodeRequest) {
         const formData = new FormData();
-        formData.append('caption', resource.caption);
-        formData.append('file', resource.file);
+        formData.append('caption', createNodeRequest.caption);
+        formData.append('file', createNodeRequest.file);
 
-        return httpInstance.post(`/${BASE}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
+        const response = await httpInstance.post(
+            this._getNodesUrl(projectId),
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             }
-        });
+        );
+        return Node.fromResponse(response.data);
     }
 
     /**
-     * Crea un enlace entre dos nodos.
-     * @param {number} fromNodeId - ID del nodo actual (Path Variable).
-     * @param {ConnectNodeRequest} request - Datos de la conexión (RequestBody).
+     * Delete a specific node from a project.
      */
-    async connectNodes(fromNodeId, request) {
-        const response = await httpInstance.post(`/${BASE}/${fromNodeId}/links`, request);
+    async deleteNode(projectId, nodeId) {
+        await httpInstance.delete(`${this._getNodesUrl(projectId)}/${nodeId}`);
+    }
+
+    /**
+     * Connect two nodes by creating a link.
+     */
+    async connectNodes(projectId, fromNodeId, connectNodeRequest) {
+        const response = await httpInstance.post(
+            `${this._getNodesUrl(projectId)}/${fromNodeId}/links`,
+            connectNodeRequest
+        );
         return response.data;
     }
 
     /**
-     * Agrega un marcador a un nodo específico.
-     * @param {number|string} nodeId - ID del nodo (PathVariable).
-     * @param {AddMarkerRequest} markerRequest - Datos del marcador (RequestBody).
+     * Get all links for a specific node.
      */
-    async addMarkerToNode(nodeId, markerRequest) {
-        try {
-            const response = await httpInstance.post(
-                `/${BASE}/${nodeId}/markers`,
-                markerRequest
-            );
-            return response.data;
-        } catch (error) {
+    async getNodeLinks(projectId, nodeId) {
+        const response = await httpInstance.get(
+            `${this._getNodesUrl(projectId)}/${nodeId}/links`
+        );
+        return response.data;
+    }
 
-            console.error("Error en el servicio de markers:", error);
-            throw error;
-        }
+    /**
+     * Deletes a link from the node
+     */
+    async deleteLink(projectId, nodeId, linkId) {
+        await httpInstance.delete(`${this._getNodesUrl(projectId)}/${nodeId}/links/${linkId}`);
     }
 }

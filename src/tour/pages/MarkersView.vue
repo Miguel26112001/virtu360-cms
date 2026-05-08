@@ -2,61 +2,139 @@
 import MarkerViewer from "@/tour/components/MarkerViewer.vue";
 import MarkerFormPanel from "@/tour/components/MarkerFormPanel.vue";
 import { NodeService } from "@/tour/services/node.service.js";
-import { AddMarkerRequest } from "@/tour/model/add-marker.request.js";
+import { MarkerService } from "@/tour/services/marker.service.js"; // Nuevo
+import {
+  AddInfoMarkerRequest,
+  AddGalleryMarkerRequest,
+  AddVideoMarkerRequest,
+  AddMarkerRequest
+} from "@/tour/model/add-marker.request.js";
 
 export default {
   name: "MarkersView",
-  computed: {
-    AddMarkerRequest() {
-      return AddMarkerRequest
-    }
-  },
   components: { MarkerViewer, MarkerFormPanel },
   data() {
     return {
       nodeService: new NodeService(),
+      markerService: new MarkerService(),
       nodes: [],
       selectedNode: null,
       newMarker: new AddMarkerRequest(),
       loading: false,
-      existingMarkers: []
+      existingMarkers: [],
+      projectId: this.$route.params.projectId
     };
+  },
+  watch: {
+    async selectedNode(newNode) {
+      if (newNode) {
+        this.existingMarkers = await this.markerService.getMarkersByNodeId(this.projectId, newNode.id);
+      }
+    }
   },
   methods: {
     async fetchNodes() {
-      this.nodes = await this.nodeService.getAll();
+      this.nodes = await this.nodeService.getNodesByProjectId(this.projectId);
     },
     handlePosition({ yaw, pitch }) {
       this.newMarker.position.yaw = yaw;
       this.newMarker.position.pitch = pitch;
     },
-    resetForm(silent = false) {
-      this.newMarker = new AddMarkerRequest();
+    handleTypeChange(type) {
+      const pos = { ...this.newMarker.position };
+      if (type === 'INFO') this.newMarker = new AddInfoMarkerRequest();
+      else if (type === 'VIDEO') this.newMarker = new AddVideoMarkerRequest();
+      else if (type === 'GALLERY') this.newMarker = new AddGalleryMarkerRequest();
 
-      if (this.$refs.viewerRef) {
-        this.$refs.viewerRef.currentTempPos = null;
-        this.$refs.viewerRef.renderMarkersState();
-      }
+      this.newMarker.position = pos;
     },
     async saveMarker() {
-      if (!this.selectedNode) return;
       this.loading = true;
-
       try {
-        const savedMarker = await this.nodeService.addMarkerToNode(this.selectedNode.id, this.newMarker);
+        let saved;
+        const nodeId = this.selectedNode.id;
 
-        this.$toast.add({ severity: 'success', summary: 'Guardado', detail: 'Punto de interés creado', life: 3000 });
+        if (this.newMarker.type === 'INFO')
+          saved = await this.markerService.addInfoMarker(this.projectId, nodeId, this.newMarker);
+        else if (this.newMarker.type === 'VIDEO')
+          saved = await this.markerService.addVideoMarker(this.projectId, nodeId, this.newMarker);
+        else
+          saved = await this.markerService.addGalleryMarker(this.projectId, nodeId, this.newMarker);
 
-        this.existingMarkers.push(savedMarker);
-
+        this.existingMarkers.push(saved);
+        this.$toast.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Marcador guardado'
+        });
         this.resetForm();
-
       } catch (e) {
-        console.error(e);
-          this.$toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el marcador', life: 3000 });
+        this.$toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo guardar'
+        });
       } finally {
         this.loading = false;
       }
+    },
+    async confirmDeleteMarker(markerId) {
+      this.$confirm.require({
+        message: '¿Estás seguro de que deseas eliminar este punto de interés?',
+        header: 'Confirmar Eliminación',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Eliminar',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          try {
+            await this.markerService.deleteMarker(
+                this.projectId,
+                this.selectedNode.id,
+                markerId
+            );
+
+            this.existingMarkers = this.existingMarkers.filter(m => m.id !== markerId);
+
+            this.$toast.add({
+              severity: 'info',
+              summary: 'Eliminado',
+              detail: 'El marcador ha sido removido correctamente',
+              life: 3000
+            });
+          } catch (e) {
+            console.error("Error eliminando marcador:", e);
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'No se pudo eliminar el marcador del servidor'
+            });
+          }
+        },
+      });
+    },
+    initMarkerEditing(markerId) {
+      const markerToEdit = this.existingMarkers.find(m => m.id === markerId);
+
+      if (markerToEdit) {
+        this.newMarker = JSON.parse(JSON.stringify(markerToEdit));
+
+        this.$toast.add({
+          severity: 'warn',
+          summary: 'Modo Edición',
+          detail: `Editando: ${markerToEdit.title}`,
+          life: 2000
+        });
+
+        if (window.innerWidth < 992) {
+          document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    },
+    resetForm() {
+      this.handleTypeChange('INFO');
+      if (this.$refs.viewerRef) this.$refs.viewerRef.currentTempPos = null;
     }
   },
   mounted() {
@@ -78,13 +156,14 @@ export default {
     </div>
 
     <div class="grid grid-nogutter shadow-2 border-round-xl overflow-hidden bg-white">
-      <!-- Visor (Prioridad en Mobile: Ocupa más espacio) -->
       <div class="col-12 lg:col-8 viewer-container">
         <MarkerViewer
             ref="viewerRef"
-            :panorama="selectedNode?.panorama"
-            :markers="existingMarkers.filter(m => m.nodeId == selectedNode?.id)"
+            :panorama="selectedNode?.panoramaUrl"
+            :markers="existingMarkers"
             @position-selected="handlePosition"
+            @marker-delete="confirmDeleteMarker"
+            @marker-edit="initMarkerEditing"
         />
       </div>
 
@@ -100,6 +179,7 @@ export default {
             v-model="newMarker"
             :loading="loading"
             :disabled="!selectedNode || newMarker.position.yaw === 0"
+            @type-change="handleTypeChange"
             @save="saveMarker"
             @cancel="resetForm"
         />
@@ -113,17 +193,14 @@ export default {
   background-color: #fafafa;
 }
 
-/* Altura del Visor */
 .viewer-container {
-  height: 50vh; /* Altura por defecto (móvil) */
+  height: 50vh;
 }
 
-/* Altura del Formulario */
 .form-container {
-  max-height: 40vh; /* Altura por defecto (móvil) */
+  max-height: 40vh;
 }
 
-/* Media Query para pantallas grandes (lg = 992px en PrimeFlex) */
 @media screen and (min-width: 992px) {
   .viewer-container {
     height: 75vh;
