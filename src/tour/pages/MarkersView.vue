@@ -78,6 +78,60 @@ export default {
         this.loading = false;
       }
     },
+    async confirmDeleteMarker(markerId) {
+      this.$confirm.require({
+        message: '¿Estás seguro de que deseas eliminar este punto de interés?',
+        header: 'Confirmar Eliminación',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Eliminar',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          try {
+            await this.markerService.deleteMarker(
+                this.projectId,
+                this.selectedNode.id,
+                markerId
+            );
+
+            this.existingMarkers = this.existingMarkers.filter(m => m.id !== markerId);
+
+            this.$toast.add({
+              severity: 'info',
+              summary: 'Eliminado',
+              detail: 'El marcador ha sido removido correctamente',
+              life: 3000
+            });
+          } catch (e) {
+            console.error("Error eliminando marcador:", e);
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'No se pudo eliminar el marcador del servidor'
+            });
+          }
+        },
+      });
+    },
+    initMarkerEditing(markerId) {
+      const markerToEdit = this.existingMarkers.find(m => m.id === markerId);
+
+      if (markerToEdit) {
+        this.newMarker = JSON.parse(JSON.stringify(markerToEdit));
+
+        this.$toast.add({
+          severity: 'warn',
+          summary: 'Modo Edición',
+          detail: `Editando: ${markerToEdit.title}`,
+          life: 2000
+        });
+
+        if (window.innerWidth < 992) {
+          document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    },
     resetForm() {
       this.handleTypeChange('INFO');
       if (this.$refs.viewerRef) this.$refs.viewerRef.currentTempPos = null;
@@ -108,6 +162,8 @@ export default {
             :panorama="selectedNode?.panoramaUrl"
             :markers="existingMarkers"
             @position-selected="handlePosition"
+            @marker-delete="confirmDeleteMarker"
+            @marker-edit="initMarkerEditing"
         />
       </div>
 
