@@ -48,7 +48,7 @@ export class MarkerService {
     async addGalleryMarker(projectId, nodeId, galleryMarkerRequest) {
         const response = await httpInstance.post(
             `${this._getMarkersBaseUrl(projectId, nodeId)}/gallery-markers`,
-            galleryMarkerRequest
+            galleryMarkerRequest.toJSON()
         );
         return Marker.fromResponse(response.data);
     }

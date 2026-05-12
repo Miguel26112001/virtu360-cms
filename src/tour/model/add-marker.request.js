@@ -8,6 +8,11 @@ export class AddMarkerRequest {
         this.summary = "";
         this.type = type;
     }
+
+    toJSON() {
+        const { type, ...cleanObject } = this;
+        return cleanObject;
+    }
 }
 
 export class AddInfoMarkerRequest extends AddMarkerRequest {
